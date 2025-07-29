@@ -52,7 +52,7 @@ typedef struct {
 /*---------------------------------------------Funcoes Galinha----------------------------------------------*/
 
 
-tGalinha MovimentoGalinha(tGalinha galinha, char mov, int qtdPistas) {
+tGalinha MovimentaGalinha(tGalinha galinha, char mov, int qtdPistas) {
     if(mov == 'w') {
         galinha.y -= 3;                                     // 3 porque a largura da pista e de 3 linhas
     }
@@ -113,15 +113,22 @@ tPista MovimentaCarrosNaPista(tPista pista, int largura) {
     return pista;
 }
 
+tPista ReduzVelocidadePista(tPista pista) {
+    if(pista.velocidade > 1) {
+        pista.velocidade--;
+    }
+    return pista;
+}
+
 int VerificaColisaoNaPista(tPista pista, tGalinha galinha, int largura) {
     int i;
     int xGalinha = ObtemXGalinha(galinha);
     for(i = 0; i < pista.numCarros; i++) {
         if(abs(pista.carrosX[i] - xGalinha) <= 2) {  
-            return i;      //Verifica se a distancia entre a galinha e algum carro causa colisao e retorna o carro
+            return i+1;      //Verifica se a distancia entre a galinha e algum carro causa colisao e retorna o carro(comecando do 1)
         }
         else if((xGalinha == 2 && pista.carrosX[i] == largura) || (xGalinha == largura-1 && pista.carrosX[i] == 1)) {
-            return i;      //Verifica se a galinha esta numa extremidade e o carro acabou de atravessar a borda e retorna o carro
+            return i+1;      //Verifica se a galinha esta numa extremidade e o carro acabou de atravessar a borda e retorna o carro(comecando do 1)
         }
     }
     return 0;
@@ -195,6 +202,32 @@ void DesenhaMapaJogo(tJogo jogo) {  //Desenha o mapa, printa, e apaga em sequenc
 
 void JogaJogo(tJogo jogo) {
     int i;
+    int pistaGalinha;
+    char movimento = 0;
+
+
+    while(!AcabouJogo(jogo)) {
+        scanf("%c", &movimento);
+        if(movimento != 'w' && movimento != 's' && movimento != ' ') {
+            continue;
+        }
+        jogo.galinha = MovimentaGalinha(jogo.galinha, movimento, jogo.quantidadePistas);
+        for(i = 0; i < jogo.quantidadePistas; i++) {
+            jogo.pistas[i] = MovimentaCarrosNaPista(jogo.pistas[i], jogo.largura);
+        }
+        pistaGalinha = (ObtemYGalinha(jogo.galinha) - 1)/3;
+
+        if(VerificaColisaoNaPista(jogo.pistas[pistaGalinha], jogo.galinha, jogo.largura)) {
+            jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);
+            if(jogo.animacoes) {
+                jogo.pistas[pistaGalinha] = ReduzVelocidadePista(jogo.pistas[pistaGalinha]);
+            }
+        }
+
+        jogo.iteracao++;
+        printf("VIDAS:%d, ITERACAO:%d\n\n", jogo.galinha.vidas, jogo.iteracao);
+        DesenhaMapaJogo(jogo);
+    }
 }
 
 
@@ -206,30 +239,34 @@ int main() {
 
 
     tJogo jogo;
-    jogo.largura = 10;
-    jogo.quantidadePistas = 2;
-    jogo.pistas[0].velocidade = 1;
-    jogo.pistas[0].direcao = 'D';
-    jogo.pistas[0].numCarros = 2;
-    jogo.pistas[0].carrosX[0] = 2;
-    jogo.pistas[0].carrosX[1] = 9;
-    jogo.pistas[1].numCarros = 0;
+    jogo.largura = 25;
+    jogo.animacoes = 1;
+    jogo.quantidadePistas = 4;
+    jogo.iteracao = -1;
+    jogo.pistas[1].velocidade = 2;
+    jogo.pistas[1].direcao = 'D';
+    jogo.pistas[1].numCarros = 2;
+    jogo.pistas[1].carrosX[0] = 2;
+    jogo.pistas[1].carrosX[1] = 9;
+    jogo.pistas[0].numCarros = 0;
+    jogo.pistas[2].numCarros = 0;
+    jogo.pistas[3].numCarros = 0;
 
 
     strcpy(jogo.galinha.desenhoGalinha[0], "^_^");
     strcpy(jogo.galinha.desenhoGalinha[1], "(o)");
+    jogo.galinha.vidas = 2;
+    jogo.galinha.x = 12;
+    jogo.galinha.y = 10;
 
-    jogo.galinha.x = 5;
-    jogo.galinha.y = 4;
-
-    strcpy(jogo.pistas[0].desenhoCarro[0][0], "[-]");
-    strcpy(jogo.pistas[0].desenhoCarro[0][1], "---");
-    strcpy(jogo.pistas[0].desenhoCarro[1][0], "[-]");
-    strcpy(jogo.pistas[0].desenhoCarro[1][1], "/-/");
-    strcpy(jogo.pistas[0].desenhoCarro[2][0], "[-]");
-    strcpy(jogo.pistas[0].desenhoCarro[2][1], "|-|");
-    strcpy(jogo.pistas[0].desenhoCarro[3][0], "[-]");
-    strcpy(jogo.pistas[0].desenhoCarro[3][1], "\\-\\");
+    strcpy(jogo.pistas[1].desenhoCarro[0][0], "[-]");
+    strcpy(jogo.pistas[1].desenhoCarro[0][1], "---");
+    strcpy(jogo.pistas[1].desenhoCarro[1][0], "[-]");
+    strcpy(jogo.pistas[1].desenhoCarro[1][1], "/-/");
+    strcpy(jogo.pistas[1].desenhoCarro[2][0], "[-]");
+    strcpy(jogo.pistas[1].desenhoCarro[2][1], "|-|");
+    strcpy(jogo.pistas[1].desenhoCarro[3][0], "[-]");
+    strcpy(jogo.pistas[1].desenhoCarro[3][1], "\\-\\");
 
     for(i  = 0; i < jogo.quantidadePistas*3+1; i++) {
         for(j = 0; j < jogo.largura+2; j++) {
@@ -237,11 +274,7 @@ int main() {
         }
     }
 
-    DesenhaMapaJogo(jogo);
-    jogo.galinha = MovimentoGalinha(jogo.galinha, 'w', jogo.quantidadePistas);
-    printf("\n");
-    DesenhaMapaJogo(jogo);
-
+    JogaJogo(jogo);
 
     return 0;
 }
