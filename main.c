@@ -49,12 +49,100 @@ typedef struct {
 } tJogo;
 
 
+/*-------------------------------------------Funcoes Inicializacao------------------------------------------*/
+
+
+tGalinha InicializaGalinha(int x, int vidas, int quantidadePistas) {   //Funcao Galinha
+    tGalinha galinha;
+    galinha.x = x;
+    galinha.y = quantidadePistas * 3 - 2;         //nascer na ultima pista
+    galinha.vidas = vidas;
+    return galinha;
+}
+
+tPista InicializaPista(char direcao, int velocidade, int numCarros, int CarrosX[]) {  //Funcao Pista
+    int i;
+    tPista pista;
+    pista.direcao = direcao;
+    pista.velocidade = velocidade;
+    pista.numCarros = numCarros;
+    for(i = 0; i < numCarros; i++) {
+        pista.carrosX[i] = CarrosX[i];
+    }
+    return pista;
+}
+
+tJogo InicializaMapaJogo(tJogo jogo) {  //Funcao Jogo
+    int i, j;
+    for(i = 0; i < jogo.quantidadePistas*3 + 1; i++) {
+        for(j = 0; j < jogo.largura + 2; j++) {
+            if(j == 0 || j == jogo.largura + 1) {      //Desenha as laterais
+                jogo.grade[i][j] = '|';
+            }
+            else if(i%3 == 0) {                    //Desenha as divisorias de pista
+                if(j%3) {
+                    jogo.grade[i][j] = '-';
+                }
+                else {
+                    jogo.grade[i][j] = ' ';
+                }
+            }
+            else {                                 //Desenha os espacoes na pista
+                jogo.grade[i][j] = ' ';
+            }
+        }
+    }
+    return jogo;
+}
+
+tJogo InicializaJogo() {  // Funcao Jogo
+    tJogo jogo;
+    int i, j;
+    int pistaVelocidade, pistaNumCarros;
+    char pistaDirecao;
+    int xGalinha, galinhaVidas;
+    FILE * arquivoConfig;
+    arquivoConfig = fopen("config_inicial.txt", "r");           //////
+    if(!arquivoConfig) {
+        printf("Erro ao abrir arquivoConfig");                //////
+    }
+    fscanf(arquivoConfig, "%d", &jogo.animacoes);
+    fscanf(arquivoConfig, "%d", &jogo.largura);
+    fscanf(arquivoConfig, "%d", &jogo.quantidadePistas);
+    
+
+    for(i = 0; i < jogo.quantidadePistas; i++) {
+        fscanf(arquivoConfig, "%c", &pistaDirecao);
+        if(pistaDirecao == 'D' || pistaDirecao == 'E') {
+            fscanf(arquivoConfig, "%d", &pistaVelocidade);
+            fscanf(arquivoConfig, "%d", &pistaNumCarros);
+            int CarrosX[pistaNumCarros];
+            for(j = 0; j < pistaNumCarros; j++) {
+                fscanf(arquivoConfig, "%d", &CarrosX[j]);
+            }
+            jogo.pistas[i] = InicializaPista(pistaDirecao, pistaVelocidade, pistaNumCarros, CarrosX);
+
+        }
+        else if(pistaDirecao == 'G') {
+            fscanf(arquivoConfig, "%d", &xGalinha);
+            fscanf(arquivoConfig, "%d", &galinhaVidas);
+            jogo.galinha = InicializaGalinha(xGalinha, galinhaVidas, jogo.quantidadePistas);
+        }
+        else {
+            jogo.pistas[i] = InicializaPista(0, 0, 0, 0);
+        }
+        fscanf(arquivoConfig, "\n");
+    }
+
+    fclose(arquivoConfig);
+    jogo.iteracao = 0;
+    jogo = InicializaMapaJogo(jogo);
+    return jogo;
+}
+
+
 /*---------------------------------------------Funcoes Galinha----------------------------------------------*/
 
-
-tGalinha InicializaGalinha() {
-
-}
 
 tGalinha MovimentaGalinha(tGalinha galinha, char mov, int qtdPistas) {
     if(mov == 'w') {
@@ -95,10 +183,6 @@ void DesenhaGalinha(tGalinha galinha, char mapa[MAX_ALTURA][MAX_LARGURA]) {
 
 /*----------------------------------------------Funcoes Pista-----------------------------------------------*/
 
-
-tPista InicializaPista(){
-
-}
 
 tPista MovimentaCarrosNaPista(tPista pista, int largura) {
     int i;
@@ -236,34 +320,6 @@ void OrdenaAtropelamentos(tAtropelamentos atropelamentos[], int numAtropelamento
 /*-----------------------------------------------Funcoes Jogo-----------------------------------------------*/
 
 
-tJogo InicializaMapaJogo(tJogo jogo) {
-    int i, j;
-    for(i = 0; i < jogo.quantidadePistas*3 + 1; i++) {
-        for(j = 0; j < jogo.largura + 2; j++) {
-            if(j == 0 || j == jogo.largura + 1) {      //Desenha as laterais
-                jogo.grade[i][j] = '|';
-            }
-            else if(i%3 == 0) {                    //Desenha as divisorias de pista
-                if(j%3) {
-                    jogo.grade[i][j] = '-';
-                }
-                else {
-                    jogo.grade[i][j] = ' ';
-                }
-            }
-            else {                                 //Desenha os espacoes na pista
-                jogo.grade[i][j] = ' ';
-            }
-        }
-    }
-    return jogo;
-}
-
-tJogo InicializaJogo() {
-
-
-}
-
 int AcabouJogo(tJogo jogo) {
     if(ObtemVidasGalinha(jogo.galinha) == 0 || ObtemYGalinha(jogo.galinha) == 1) {
         return 1;
@@ -361,9 +417,7 @@ tJogo jogo;        //Struct muito grande, declarada global para nao ocorrer falh
 int main() {       //Nao atrapalha outras funcoes, pois foi declarada no fim do codigo
     int i, j;
 
-
-    jogo = InicializaMapaJogo(jogo);
-    JogaJogo(jogo);
+    jogo = InicializaJogo();
 
     return 0;
 }
