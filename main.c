@@ -397,7 +397,7 @@ void GeraInicializacaoTXT(tJogo jogo) {
         }
         fprintf(arquivoInicializacao, "\n");
     }
-    fprintf(arquivoInicializacao, "A posicao central da galinha iniciara em (%d %d)", ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
+    fprintf(arquivoInicializacao, "A posicao central da galinha iniciara em (%d %d).", ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
     fclose(arquivoInicializacao);
 }
 
