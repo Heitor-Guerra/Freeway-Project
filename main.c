@@ -79,13 +79,8 @@ tJogo InicializaMapaJogo(tJogo jogo) {  //Funcao Jogo
             if(j == 0 || j == jogo.largura + 1) {      //Desenha as laterais
                 jogo.grade[i][j] = '|';
             }
-            else if(i%3 == 0) {                    //Desenha as divisorias de pista
-                if(j%3) {
-                    jogo.grade[i][j] = '-';
-                }
-                else {
-                    jogo.grade[i][j] = ' ';
-                }
+            else if((i%3 == 0 && j%3) || i == 0 || i == jogo.quantidadePistas*3) {     //linha e multiplo de 3, e a coluna nao e   //Desenha as divisorias de pista
+                jogo.grade[i][j] = '-';
             }
             else {                                 //Desenha os espacoes na pista
                 jogo.grade[i][j] = ' ';
@@ -95,7 +90,7 @@ tJogo InicializaMapaJogo(tJogo jogo) {  //Funcao Jogo
     return jogo;
 }
 
-tJogo InicializaJogo() {  // Funcao Jogo
+tJogo InicializaJogo() {  // Funcao Jogo  ///////////////////////
     tJogo jogo;
     int i, j;
     int pistaVelocidade, pistaNumCarros;
@@ -299,7 +294,7 @@ void TrocaPosicaoVetor(tAtropelamentos vet[], int pos1, int pos2) {
     vet[pos1] = vet[pos2];
     vet[pos2] = aux;
 }
-//Nao testado
+
 void OrdenaAtropelamentos(tAtropelamentos atropelamentos[], int numAtropelamentos) { //Ordenacao BubbleSort
     int i, pronto = 0;        
     while(!pronto) {
@@ -311,7 +306,7 @@ void OrdenaAtropelamentos(tAtropelamentos atropelamentos[], int numAtropelamento
                 if(atropelamentos[i-1].idCarro > atropelamentos[i].idCarro) {
                     TrocaPosicaoVetor(atropelamentos, i-1, i);
                 }
-                else if((atropelamentos[i-1].idCarro == atropelamentos[i].idCarro) && atropelamentos[i-1].iteracao > atropelamentos[i].iteracao) {
+                else if((atropelamentos[i-1].idCarro == atropelamentos[i].idCarro) && atropelamentos[i-1].iteracao < atropelamentos[i].iteracao) {
                     TrocaPosicaoVetor(atropelamentos, i-1, i);
                 }
             }
@@ -325,12 +320,37 @@ void OrdenaAtropelamentos(tAtropelamentos atropelamentos[], int numAtropelamento
                 if(atropelamentos[i-1].idCarro > atropelamentos[i].idCarro) {
                     pronto = 0;
                 }
-                else if((atropelamentos[i-1].idCarro == atropelamentos[i].idCarro) && atropelamentos[i-1].iteracao > atropelamentos[i].iteracao) {
+                else if((atropelamentos[i-1].idCarro == atropelamentos[i].idCarro) && atropelamentos[i-1].iteracao <= atropelamentos[i].iteracao) {
                     pronto = 0;
                 }
             }
         }
     }
+}
+
+void GeraResumoTXT(tAtropelamentos atropelamentos[], int numAtropelamentos, int iteracaoFinal) {
+    int i;
+    FILE * arquivoResumo;
+    arquivoResumo = fopen("resumo.txt", "w");
+
+    for(i = 0; i < numAtropelamentos; i++) {
+        fprintf(arquivoResumo, "[%d] Na pista %d o carro %d atropelou a galinha na posicao (%d,%d).\n",atropelamentos[i].iteracao, atropelamentos[i].idPista, atropelamentos[i].idCarro, atropelamentos[i].x, atropelamentos[i].y);
+    }
+    fprintf(arquivoResumo, "[%d] Fim de jogo", iteracaoFinal);
+    fclose(arquivoResumo);
+}
+
+void GeraRankingTXT(tAtropelamentos atropelamentos[], int numAtropelamentos) {
+    int i, j;
+    FILE * arquivoRanking;
+    arquivoRanking = fopen("ranking.txt", "w");
+
+    OrdenaAtropelamentos(atropelamentos, numAtropelamentos);
+    fprintf(arquivoRanking, "id_pista,id_carro,iteracao\n");
+    for(i = 0; i < numAtropelamentos; i++) {
+        fprintf(arquivoRanking, "%d,%d,%d\n", atropelamentos[i].idPista, atropelamentos[i].idCarro, atropelamentos[i].iteracao);
+    }
+    fclose(arquivoRanking);
 }
 
 
@@ -362,15 +382,23 @@ void DesenhaMapaJogo(tJogo jogo, int pontos) {  //Desenha e printa o mapa  //Com
 }
 
 void GeraInicializacaoTXT(tJogo jogo) {
+    int i, j;
+    FILE * arquivoInicializacao;
+    arquivoInicializacao = fopen("inicializacao.txt", "w");
 
-}
+    DesenhaGalinha(jogo.galinha, jogo.grade, jogo.personagensSprites);
+    for(i = 0; i < jogo.quantidadePistas; i++) {
+        DesenhaCarrosNaPista(jogo.pistas[i], jogo.grade, i, jogo.largura, jogo.animacoes, jogo.iteracao, jogo.personagensSprites);
+    }
 
-void GeraResumoTXT(tJogo jogo) {
-
-}
-
-void GeraRankingoTXT(tJogo jogo) {
-
+    for(i = 0; i < jogo.quantidadePistas*3 + 1; i++) {
+        for(j = 0; j < jogo.largura + 2; j++) {
+            fprintf(arquivoInicializacao, "%c", jogo.grade[i][j]);          //Mesmo codigo pra printar normal, mas trocando por fprintf
+        }
+        fprintf(arquivoInicializacao, "\n");
+    }
+    fprintf(arquivoInicializacao, "A posicao central da galinha iniciara em (%d %d)", ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
+    fclose(arquivoInicializacao);
 }
 
 void GeraEstatisticasTXT(tJogo jogo) {
@@ -416,8 +444,8 @@ void JogaJogo(tJogo jogo) {
         /*-------------------------------Atropelamentos-------------------------------*/
         carroAtr = VerificaColisaoNaPista(jogo.pistas[pistaGalinha], jogo.galinha, jogo.largura);
         if(carroAtr) {
-            atropelamentos[numAtr] = AtribuiInfo(pistaGalinha+1, carroAtr, jogo.iteracao, ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
-            jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);
+            atropelamentos[numAtr] = AtribuiInfo(pistaGalinha+1, carroAtr, jogo.iteracao + 1, ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
+            jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);  //A iteracao e a pista da galinha precisam do +1 para ficarem comecando no 1
             pontos = 0;
             numAtr++;
             if(jogo.animacoes) {
@@ -444,6 +472,9 @@ void JogaJogo(tJogo jogo) {
         printf("Voce perdeu todas as vidas! Fim de jogo.\n");
     }
 
+    GeraResumoTXT(atropelamentos, numAtr, jogo.iteracao);
+    GeraRankingTXT(atropelamentos, numAtr);
+
 }
 
 
@@ -455,7 +486,11 @@ int main() {
     tJogo jogo;
 
     jogo = InicializaJogo();
+    GeraInicializacaoTXT(jogo);
     JogaJogo(jogo);
 
     return 0;
 }
+
+
+//Diretorio nos Gera*
