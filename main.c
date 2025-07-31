@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 
 /*------------------------------------------------Constantes------------------------------------------------*/
@@ -8,7 +7,7 @@
 
 #define MAX_CARROS 10
 #define MAX_PISTAS 12
-#define MAX_LARGURA 102      //largura + 2 para laterais
+#define MAX_LARGURA 102      //largura + 2 para laterais      //Ao longo do codigo: y = pista*3 + 1, e largura + 2 
 #define MAX_ALTURA 37        //altura + 2 para borda superior e inferior
 #define MAX_DIRETORIO 1000
 
@@ -221,7 +220,7 @@ tPista MovimentaCarrosNaPista(tPista pista, int largura) {
 
 tPista ReduzVelocidadePista(tPista pista) {
     if(pista.velocidade > 1) {
-        pista.velocidade--;
+        pista.velocidade--;  //Quando tem animacao
     }
     return pista;
 }
@@ -331,7 +330,7 @@ void OrdenaAtropelamentos(tAtropelamentos atropelamentos[], int numAtropelamento
 void GeraResumoTXT(tAtropelamentos atropelamentos[], int numAtropelamentos, int iteracaoFinal) {
     int i;
     FILE * arquivoResumo;
-    arquivoResumo = fopen("resumo.txt", "w");
+    arquivoResumo = fopen("resumo.txt", "w"); //Trocar
 
     for(i = 0; i < numAtropelamentos; i++) {
         fprintf(arquivoResumo, "[%d] Na pista %d o carro %d atropelou a galinha na posicao (%d,%d).\n",atropelamentos[i].iteracao, atropelamentos[i].idPista, atropelamentos[i].idCarro, atropelamentos[i].x, atropelamentos[i].y);
@@ -339,11 +338,11 @@ void GeraResumoTXT(tAtropelamentos atropelamentos[], int numAtropelamentos, int 
     fprintf(arquivoResumo, "[%d] Fim de jogo", iteracaoFinal);
     fclose(arquivoResumo);
 }
-
+//Diretorio
 void GeraRankingTXT(tAtropelamentos atropelamentos[], int numAtropelamentos) {
     int i, j;
     FILE * arquivoRanking;
-    arquivoRanking = fopen("ranking.txt", "w");
+    arquivoRanking = fopen("ranking.txt", "w");  //Trocar
 
     OrdenaAtropelamentos(atropelamentos, numAtropelamentos);
     fprintf(arquivoRanking, "id_pista,id_carro,iteracao\n");
@@ -374,7 +373,7 @@ void DesenhaMapaJogo(tJogo jogo, int pontos) {  //Desenha e printa o mapa  //Com
 
     printf("Pontos: %d | Vidas: %d | Iteracoes: %d\n", pontos, ObtemVidasGalinha(jogo.galinha), jogo.iteracao);
     for(i = 0; i < jogo.quantidadePistas*3 + 1; i++) {       //printa o grid
-        for(j = 0; j < jogo.largura + 2; j++) {              //largura + 2 para correcao da borda
+        for(j = 0; j < jogo.largura + 2; j++) {
             printf("%c", jogo.grade[i][j]);
         }
         printf("\n");
@@ -384,7 +383,7 @@ void DesenhaMapaJogo(tJogo jogo, int pontos) {  //Desenha e printa o mapa  //Com
 void GeraInicializacaoTXT(tJogo jogo) {
     int i, j;
     FILE * arquivoInicializacao;
-    arquivoInicializacao = fopen("inicializacao.txt", "w");
+    arquivoInicializacao = fopen("inicializacao.txt", "w");  //Trocar
 
     DesenhaGalinha(jogo.galinha, jogo.grade, jogo.personagensSprites);
     for(i = 0; i < jogo.quantidadePistas; i++) {
@@ -400,21 +399,75 @@ void GeraInicializacaoTXT(tJogo jogo) {
     fprintf(arquivoInicializacao, "A posicao central da galinha iniciara em (%d %d).", ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
     fclose(arquivoInicializacao);
 }
+//Diretorio
+void GeraEstatisticaTXT(int numMov, int numMovS, int yMax, int yMaxAtr, int yMinAtr) {
+    FILE * arquivoEstatistica;
+    arquivoEstatistica = fopen("estatistica.txt", "w"); //Trocar
 
-void GeraEstatisticasTXT(tJogo jogo) {
+    fprintf(arquivoEstatistica, "Numero total de movimentos: %d\n", numMov);
+    fprintf(arquivoEstatistica, "Altura maxima que a galinha chegou: %d\n", yMax);
+    fprintf(arquivoEstatistica, "Altura maxima que a galinha foi atropelada: %d\n", yMaxAtr);
+    fprintf(arquivoEstatistica, "Altura minima que a galinha foi atropelada: %d\n", yMinAtr);
+    fprintf(arquivoEstatistica, "Numero de movimentos na direcao oposta: %d\n", numMovS);
 
+    fclose(arquivoEstatistica);
 }
 
-void GeraHeatmapTXT(tJogo jogo) {
+void AtualizaHeatmap(tJogo jogo, int linhas, int colunas, int heatmap[linhas][colunas], int colisao) {
+    int i, j;
+    int x = ObtemXGalinha(jogo.galinha) - 1, y = ObtemYGalinha(jogo.galinha) - 1; // -1 porque comeca no 0, enquanto no jogo comeca em 1 
+    if(colisao) {
+        for(i = 0; i < colunas; i++) {
+            heatmap[y][i] = -1;     //
+            heatmap[y+1][i] = -1;
+        }
+    }
+    else {
+        for(i = 0; i < 2; i++) {
+            for(j = -1; j < 2; j++) {
+                if(heatmap[y+i][x+j] >= 0 && heatmap[y+i][x+j] < 99) {
+                    heatmap[y+i][x+j]++;      //Incrementa o valor no retangulo 2x3 da galinha
+                }
+            }
+        }
+    }
+}
+//Diretorio
+void GeraHeatmapTXT(int linhas, int colunas, int heatmap[linhas][colunas]) {
+    int i, j;
+    FILE * arquivoHeatmap;
+    arquivoHeatmap = fopen("heatmap.txt", "w");  //Trocar
 
+    for(i = 0; i < linhas; i++) {
+        for(j = 0; j < colunas; j++) {
+            if(heatmap[i][j] == -1) {
+                fprintf(arquivoHeatmap, " * ");
+            }
+            else {
+                fprintf(arquivoHeatmap, "%2d ", heatmap[i][j]);
+            }
+        }
+        fprintf(arquivoHeatmap, "\n");
+    }
+    fclose(arquivoHeatmap);
 }
 
 void JogaJogo(tJogo jogo) {
-    int i, pistaGalinha, carroAtr;
+    int i, j, pistaGalinha, carroAtr;
     int pontos = 0;
     char movimento = 0;
 
-    int numMov = 0, numMovS = 0, yMaxGalinha = 0, yMaxAtr = 0, yMinAtr = 0;
+    int linhasHeatmap = jogo.quantidadePistas*3 - 1, colunasHeatmap = jogo.largura;   //Desconsiderar as bordas
+    int heatmap[linhasHeatmap][colunasHeatmap];
+    for(i = 0; i < linhasHeatmap; i++) {
+        for(j = 0; j < colunasHeatmap; j++) {
+            heatmap[i][j] = 0;                      //Zera o heatmap
+        }
+    }
+    AtualizaHeatmap(jogo, linhasHeatmap, colunasHeatmap, heatmap, 0); //Contar a posicao Inicial
+
+
+    int numMov = 0, numMovS = 0, yMaxGalinha = 0, yMaxAtr = 0, yMinAtr = 1000; //Numeros arbitrarios 
     int numAtr = 0;                                                             //Variaveis para estatistica
     tAtropelamentos atropelamentos[ObtemVidasGalinha(jogo.galinha)];
 
@@ -426,7 +479,7 @@ void JogaJogo(tJogo jogo) {
         if(movimento != 'w' && movimento != 's' && movimento != ' ') {
             continue;
         }
-        switch(movimento) {
+        switch(movimento) {           //Estatisticas
             case 'w':
                 numMov++;
                 break;
@@ -443,19 +496,33 @@ void JogaJogo(tJogo jogo) {
 
         /*-------------------------------Atropelamentos-------------------------------*/
         carroAtr = VerificaColisaoNaPista(jogo.pistas[pistaGalinha], jogo.galinha, jogo.largura);
-        if(carroAtr) {
-            atropelamentos[numAtr] = AtribuiInfo(pistaGalinha+1, carroAtr, jogo.iteracao + 1, ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha));
+        if(carroAtr) {      //Se nao tiver colisao, retorna 0, do contrario retorna o numero do carro
+            atropelamentos[numAtr] = AtribuiInfo(pistaGalinha+1, carroAtr, jogo.iteracao + 1, ObtemXGalinha(jogo.galinha), ObtemYGalinha(jogo.galinha)); //Pista + 1, pq pistaGalinha comeca em 0; Iteracao + 1, pq a iteracao adiciona no final
+            AtualizaHeatmap(jogo, linhasHeatmap, colunasHeatmap, heatmap, 1);
+
+            if((jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha)) > yMaxAtr) { //Diferenca da altura do mapa(ponto 1 ate borda inferior) e da galinha
+                yMaxAtr = jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha);
+            }
+            if((jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha)) < yMinAtr) { //Diferenca da altura do mapa(ponto 1 ate borda inferior) e da galinha
+                yMinAtr = jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha);
+            }
+
             jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);  //A iteracao e a pista da galinha precisam do +1 para ficarem comecando no 1
-            pontos = 0;
             numAtr++;
+            pontos = 0;
             if(jogo.animacoes) {
                 jogo.pistas[pistaGalinha] = ReduzVelocidadePista(jogo.pistas[pistaGalinha]);
             }
         }
-        else if (!VerificaColisaoNaPista(jogo.pistas[pistaGalinha], jogo.galinha, jogo.largura) && movimento == 'w') {
+        else if (!carroAtr && movimento == 'w') {
             pontos++;
         }
 
+        /*---------------------------Estatisticas e Heatmap---------------------------*/
+        if((jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha)) > yMaxGalinha) { //Diferenca da altura do mapa(ponto 1 ate borda inferior) e da galinha
+            yMaxGalinha = jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha);
+        }
+        AtualizaHeatmap(jogo, linhasHeatmap, colunasHeatmap, heatmap, 0);
 
         /*---------------------------Print do Mapa e outros---------------------------*/
         if(ObtemYGalinha(jogo.galinha) == 1) {
@@ -474,7 +541,8 @@ void JogaJogo(tJogo jogo) {
 
     GeraResumoTXT(atropelamentos, numAtr, jogo.iteracao);
     GeraRankingTXT(atropelamentos, numAtr);
-
+    GeraEstatisticaTXT(numMov, numMovS, yMaxGalinha, yMaxAtr, yMinAtr);
+    GeraHeatmapTXT(linhasHeatmap, colunasHeatmap, heatmap);
 }
 
 
