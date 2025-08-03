@@ -457,8 +457,8 @@ void AtualizaHeatmap(tJogo jogo, int linhas, int colunas, int heatmap[linhas][co
         }
     }
     else {
-        for(i = 0; i < 2; i++) {
-            for(j = -1; j < 2; j++) {
+        for(i = 0; i <= 1; i++) {
+            for(j = -1; j <= 1; j++) {
                 if(heatmap[y+i][x+j] >= 0 && heatmap[y+i][x+j] < 99) {
                     heatmap[y+i][x+j]++;      //Incrementa o valor no retangulo 2x3 da galinha
                 }
@@ -523,7 +523,7 @@ void JogaJogo(tJogo jogo, char * argv) {
                 yMinAtr = jogo.quantidadePistas*3 - ObtemYGalinha(jogo.galinha);
             }
 
-            jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);  //A iteracao e a pista da galinha precisam do +1 para ficarem comecando no 1
+            jogo.galinha = ResetaGalinha(jogo.galinha, jogo.quantidadePistas);
             pontos = 0;
             if(jogo.animacoes) {
                 jogo.pistas[pistaGalinha] = ReduzVelocidadePista(jogo.pistas[pistaGalinha]);
