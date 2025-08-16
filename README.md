@@ -1,6 +1,5 @@
-To play:
-type
+<h1> How to Play </h1>
+Type
+  `./prog /absolute/path/to/the/case`
 
-  ./prog /absolute/path/to/the/case
-
-then, use w, s or "space", to walk forward, walk backward, or stay still
+Then, use w, s or "space", to walk forward, walk backward, or stay still
