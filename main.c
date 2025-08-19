@@ -137,7 +137,6 @@ tJogo InicializaJogo(char * argv) {  // Funcao Jogo
     arquivoPersonagens = fopen(diretorio, "r");
     if(!arquivoPersonagens) {
         printf("ERRO (%s): Nao foi possivel abrir personagens.txt", diretorio);
-        fclose(arquivoConfig);
         exit(1);
     }
 
